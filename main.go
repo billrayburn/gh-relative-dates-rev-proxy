@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"os"
 	"regexp"
@@ -34,10 +33,9 @@ func logSetup() {
 	log.Printf("Server will run on: %s\n", getListenAddress())
 }
 
-// Serve a reverse proxy for a given url
-func serveReverseProxy(target string, res http.ResponseWriter, req *http.Request) {
+func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
 	// parse the url
-	targetURL, _ := url.Parse(target)
+	targetURL, _ := url.Parse("https://github.com")
 	log.Printf("redirecting to %s", req.URL)
 	qvals, err := url.ParseQuery(req.URL.RawQuery)
 	if err != nil {
@@ -70,21 +68,13 @@ func serveReverseProxy(target string, res http.ResponseWriter, req *http.Request
 		}
 	}
 
-	// create the reverse proxy
-	proxy := httputil.NewSingleHostReverseProxy(targetURL)
-
 	// Update the headers to allow for SSL redirection
 	req.URL.Host = targetURL.Host
 	req.URL.Scheme = targetURL.Scheme
 	req.Host = targetURL.Host
 
-	log.Printf("redirecting rewritten req to %s%s", target, req.URL)
-	// Note that ServeHttp is non blocking and uses a go routine under the hood
-	proxy.ServeHTTP(res, req)
-}
-
-func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
-	serveReverseProxy("https://github.com", res, req)
+	log.Printf("redirecting rewritten req to %s", req.URL)
+	http.Redirect(res, req, req.URL.String(), http.StatusTemporaryRedirect)
 }
 
 func main() {
