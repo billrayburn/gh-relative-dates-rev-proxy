@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var dateRegex = regexp.MustCompile(`(created|closed):[<>]([0-9+dmh]+)`)
+var dateRegex = regexp.MustCompile(`(created|updated|closed|merged):[<>]([0-9+dmh]+)`)
 
 // Get env var or default
 func getEnv(key, fallback string) string {
